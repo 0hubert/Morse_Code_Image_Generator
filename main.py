@@ -101,51 +101,87 @@ def morse_to_text(morse_code):
     
     return text.strip()
 
+# New function to save the image
+def save_image(img, filepath):
+    """Save the generated image to the specified filepath"""
+    img.save(filepath)
+
+def upload_image(filepath):
+    """Upload an image and return its RGB data"""
+    img = Image.open(filepath)
+    rgb_data = list(img.getdata())  # Get RGB data
+    return rgb_data
+
+def rgb_to_code(rgb_data):
+    """Convert RGB data to English alphabet code"""
+    # Example conversion logic (you can customize this)
+    code = ''
+    for r, g, b in rgb_data:
+        # Convert each RGB triplet to a character
+        # This example uses a simple mapping to ensure a wider range of characters
+        code += chr((r % 26) + 65)  # Map R to A-Z
+        code += chr((g % 26) + 65)  # Map G to A-Z
+        code += chr((b % 26) + 65)  # Map B to A-Z
+    return code
+
+# Create a mapping from letters to RGB values
+def create_rgb_mapping():
+    mapping = {}
+    for i in range(26):  # For letters A-Z
+        # Assign a unique RGB value for each letter
+        mapping[chr(i + 65)] = (i * 10, i * 10, i * 10)  # Example: grayscale mapping
+    return mapping
+
+# Convert text to RGB
+def text_to_rgb(text, rgb_mapping):
+    rgb_data = []
+    for char in text.upper():
+        if char in rgb_mapping:
+            rgb_data.append(rgb_mapping[char])
+        else:
+            rgb_data.append((0, 0, 0))  # Default for unknown characters (black)
+    return rgb_data
+
+# Convert RGB back to text
+def rgb_to_text(rgb_data, rgb_mapping):
+    reverse_mapping = {v: k for k, v in rgb_mapping.items()}
+    text = ''
+    for rgb in rgb_data:
+        text += reverse_mapping.get(rgb, '?')  # Use '?' for unknown RGB values
+    return text
+
 def main():
-    print("Welcome to the Morse Code Converter!")
-    print("Enter '1' for Text to Morse Code (with colored image)")
-    print("Enter '2' for Morse Code to Text")
+    print("Welcome to the RGB Converter!")
+    print("Enter '1' for Text to RGB")
+    print("Enter '2' for RGB to Text from an image file")
     print("Enter 'quit' to exit the program")
     
-    # Create 'morse_images' directory if it doesn't exist
-    if not os.path.exists('morse_images'):
-        os.makedirs('morse_images')
-    
+    rgb_mapping = create_rgb_mapping()  # Create the RGB mapping
+
     while True:
         choice = input("\nEnter your choice (1/2/quit): ")
         
         if choice.lower() == 'quit':
-            print("Thanks for using the Morse Code Converter!")
+            print("Thanks for using the RGB Converter!")
             break
             
         elif choice == '1':
-            text = input("Enter the text to convert to Morse Code: ")
-            morse_result = text_to_morse(text)
-            print("\nMorse Code:")
-            print(morse_result)
-            
-            # Generate random colors for each unique letter
-            letter_colors = {letter: generate_random_color() 
-                           for letter in set(text.upper())}
-            
-            # Create and save the image
-            img = create_morse_image(morse_result, letter_colors)
-            image_path = f'morse_images/morse_{text.replace(" ", "_")}.png'
-            img.save(image_path)
-            print(f"\nImage saved as: {image_path}")
-            
-            # Print color legend
-            print("\nColor Legend:")
-            for letter, color in letter_colors.items():
-                if letter != ' ':
-                    print(f"Letter '{letter}': RGB{color}")
+            text = input("Enter the text to convert to RGB: ")
+            rgb_result = text_to_rgb(text, rgb_mapping)
+            print("\nRGB Data:")
+            print(rgb_result)
             
         elif choice == '2':
-            print("Note: Use single space between letters and double space between words")
-            morse = input("Enter the Morse Code to convert to text: ")
-            text_result = morse_to_text(morse)
-            print("\nText:")
-            print(text_result)
+            image_path = input("Enter the path to the image file (e.g., \\morse_images\\encoded_five.png): ")
+            
+            # Check if the file exists
+            if os.path.isfile(image_path):
+                rgb_data = upload_image(image_path)  # Upload and get RGB data
+                text_result = rgb_to_text(rgb_data, rgb_mapping)  # Convert RGB data to text
+                print("\nDecoded Text:")
+                print(text_result)
+            else:
+                print(f"Error: The file '{image_path}' does not exist. Please check the path and try again.")
             
         else:
             print("Invalid choice! Please enter 1, 2, or 'quit'")
